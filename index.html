@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ustoz xoleric</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap');
+
+        :root {
+            --bg-dark: #0f0c29;
+            --gradient: linear-gradient(45deg, #24243e, #302b63, #0f0c29);
+            --neon-blue: #00d2ff;
+            --neon-pink: #ff007f;
+            --neon-green: #39ff14;
+            --glass: rgba(255, 255, 255, 0.1);
+            --text: #e0e0e0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Fredoka', sans-serif;
+        }
+
+        body {
+            background: var(--bg-dark);
+            background: var(--gradient);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        /* Kirish ekrani (Ruxsat olish uchun) */
+        #overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-dark);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: 0.5s;
+        }
+
+        .start-btn {
+            padding: 20px 50px;
+            font-size: 2rem;
+            background: var(--neon-pink);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 0 20px var(--neon-pink);
+            animation: pulse 2s infinite;
+        }
+
+        /* Header */
+        header {
+            width: 90%;
+            max-width: 1000px;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .score-board {
+            background: var(--glass);
+            padding: 10px 25px;
+            border-radius: 20px;
+            border: 1px solid var(--neon-blue);
+            box-shadow: 0 0 15px rgba(0, 210, 255, 0.3);
+            font-size: 1.5rem;
+        }
+
+        /* Asosiy Arena */
+        .game-container {
+            flex: 1;
+            width: 90%;
+            max-width: 900px;
+            background: var(--glass);
+            backdrop-filter: blur(15px);
+            border-radius: 40px;
+            margin: 20px 0;
+            padding: 40px;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        .word-display {
+            font-size: 3.5rem;
+            font-weight: 700;
+            text-align: center;
+            min-height: 200px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            align-content: center;
+        }
+
+        .word-node {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 15px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            opacity: 0.3;
+            color: #fff;
+        }
+
+        .word-node.active {
+            opacity: 1;
+            transform: scale(1.2);
+            color: var(--neon-blue);
+            text-shadow: 0 0 15px var(--neon-blue);
+            background: rgba(0, 210, 255, 0.1);
+        }
+
+        .word-node.done {
+            opacity: 1;
+            color: var(--neon-green);
+            text-shadow: 0 0 10px var(--neon-green);
+            transform: scale(0.9);
+        }
+
+        /* Mikrofon Visualizer */
+        .mic-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .mic-orbit {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--glass);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .mic-orbit.listening::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 4px solid var(--neon-pink);
+            animation: ripple 1.5s linear infinite;
+        }
+
+        .status-msg {
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+            color: #aaa;
+        }
+
+        /* Mavzular ro'yxati */
+        .topic-scroller {
+            width: 100%;
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+
+        .topic-card {
+            flex: 0 0 auto;
+            background: var(--glass);
+            padding: 10px 20px;
+            border-radius: 15px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: 0.3s;
+        }
+
+        .topic-card:hover, .topic-card.active {
+            border-color: var(--neon-pink);
+            background: rgba(255, 0, 127, 0.1);
+        }
+
+        /* Animatsiyalar */
+        @keyframes ripple {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.8); opacity: 0; }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        ::-webkit-scrollbar { height: 6px; }
+        ::-webkit-scrollbar-thumb { background: var(--neon-pink); border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+    <div id="overlay">
+        <h1 style="margin-bottom: 30px; text-align: center;">🚀 Koinotga xush kelibsiz!<br><span style="font-size: 1.2rem; color: #888;">Mikrofonni yoqish uchun tugmani bosing</span></h1>
+        <button class="start-btn" onclick="initApp()">BOSHLASH</button>
+    </div>
+
+    <header>
+        <div class="score-board">✨ Ball: <span id="score">0</span></div>
+        <h2 style="color: var(--neon-pink)">R va Z Sayyorasi</h2>
+        <div class="score-board">📖 <span id="progress">0/0</span></div>
+    </header>
+
+    <div class="topic-scroller" id="topicList"></div>
+
+    <main class="game-container">
+        <div class="word-display" id="wordContainer"></div>
+        
+        <div class="mic-section">
+            <div class="mic-orbit" id="micIcon">🎙️</div>
+            <div class="status-msg" id="status">Eshityapman...</div>
+        </div>
+    </main>
+
+    <script>
+        const topics = [
+            {
+                name: "🚀 Raketa va Zafar",
+                text: "Za-far ra-ke-ta ya-sa-di. Ra-ke-ta ra-ngi za-r-hal. Za-far ra-ke-ta-da fa-zo-ga uch-di. Zu-m-rad un-ga ra-h-mat ay-t-di. Re-zi-na g'-i-l-di-rak te-z ay-la-na-di. Za-far va Zu-m-rad zi-r-ak ta-qish-di."
+            },
+            {
+                name: "🐯 Re-ks va Zo-o-park",
+                text: "Zo-o-pa-r-k-da za-ra-fa bor. Za-ra-fa-ning bo'-y-ni uz-un. Re-ks i-ti za-n-ji-r-da tur-ib-di. Zi-ra va ra-y-hon ju-da xu-sh-bo'-y. Ro-zet-ka-ga te-g-mang. Ze-b-ra o-la-bu-ji-r."
+            },
+            {
+                name: "🍎 Shi-rin Me-va-lar",
+                text: "O'-ri-k va zo'-r ol-ma pi-sh-di. Ra-no ze-r-ik-di. U za-r-da-li ye-di. Ma-li-na va ra-y-hon bo-g'-da ko'-p. Zo-m-mi o'-y-in-cho-g'-i-miz qu-v-no-q. Ra-m-ziy so-at za-ng ur-di."
+            }
+        ];
+
+        let currentIndex = 0;
+        let wordsArr = [];
+        let score = 0;
+        let recognition;
+        let isMicEnabled = false;
+
+        function initApp() {
+            document.getElementById('overlay').style.opacity = '0';
+            setTimeout(() => document.getElementById('overlay').remove(), 500);
+            
+            setupRecognition();
+            loadTopics();
+            startLesson(0);
+        }
+
+        function setupRecognition() {
+            window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!window.SpeechRecognition) {
+                alert("Brauzeringiz ovoz aniqlashni qo'llab-quvvatlamaydi. Iltimos Chrome ishlating.");
+                return;
+            }
+
+            recognition = new SpeechRecognition();
+            recognition.lang = 'uz-UZ';
+            recognition.continuous = true;
+            recognition.interimResults = true;
+
+            recognition.onstart = () => {
+                isMicEnabled = true;
+                document.getElementById('micIcon').classList.add('listening');
+                document.getElementById('status').innerText = "Qani, o'qi-chi! 👂";
+            };
+
+            recognition.onresult = (event) => {
+                let transcript = "";
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    transcript += event.results[i][0].transcript;
+                }
+                processSpeech(transcript.toLowerCase());
+            };
+
+            recognition.onend = () => {
+                // DOIMIY YONIQ TURISHI UCHUN:
+                if (isMicEnabled) recognition.start();
+            };
+
+            recognition.start();
+        }
+
+        function loadTopics() {
+            const list = document.getElementById('topicList');
+            topics.forEach((t, i) => {
+                const card = document.createElement('div');
+                card.className = `topic-card ${i===0?'active':''}`;
+                card.innerText = t.name;
+                card.onclick = () => {
+                    document.querySelectorAll('.topic-card').forEach(c => c.classList.remove('active'));
+                    card.classList.add('active');
+                    startLesson(i);
+                };
+                list.appendChild(card);
+            });
+        }
+
+        function startLesson(index) {
+            const container = document.getElementById('wordContainer');
+            container.innerHTML = '';
+            currentIndex = 0;
+            const rawText = topics[index].text;
+            wordsArr = rawText.split(' ').map(w => ({
+                original: w,
+                clean: w.toLowerCase().replace(/[^a-zʻo'g']/g, '').replace(/-/g, '')
+            }));
+
+            wordsArr.forEach((word, i) => {
+                const span = document.createElement('span');
+                span.className = `word-node ${i===0?'active':''}`;
+                span.innerText = word.original;
+                container.appendChild(span);
+            });
+
+            updateUI();
+        }
+
+        function processSpeech(said) {
+            if (currentIndex >= wordsArr.length) return;
+
+            const target = wordsArr[currentIndex].clean;
+            // Bolalar uchun xatoliklarni inobatga olib, qisman moslikni tekshirish
+            if (said.includes(target)) {
+                completeWord();
+            }
+        }
+
+        function completeWord() {
+            const nodes = document.querySelectorAll('.word-node');
+            nodes[currentIndex].classList.remove('active');
+            nodes[currentIndex].classList.add('done');
+            nodes[currentIndex].innerText = wordsArr[currentIndex].original.replace(/-/g, ''); // Chiziqchani olib tashlash
+
+            currentIndex++;
+            score += 10;
+            
+            if (currentIndex < wordsArr.length) {
+                nodes[currentIndex].classList.add('active');
+                nodes[currentIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+                document.getElementById('status').innerText = "Ajoyib! Mavzu tugadi! 🏆";
+            }
+            updateUI();
+        }
+
+        function updateUI() {
+            document.getElementById('score').innerText = score;
+            document.getElementById('progress').innerText = `${currentIndex}/${wordsArr.length}`;
+        }
+    </script>
+</body>
+</html>
